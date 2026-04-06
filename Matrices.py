@@ -17,7 +17,7 @@ def ver_alumnos(alumnos):
 
     alumnos_ordenados = sorted(alumnos, key=lambda x: calcular_promedio(x[1]), reverse=True)
     
-    print("\n--- Lista de Alumnos ---")
+    print("\nLista de Alumnos")
     for alumno in alumnos_ordenados:
         nombre = alumno[0]
         materias = alumno[1]
