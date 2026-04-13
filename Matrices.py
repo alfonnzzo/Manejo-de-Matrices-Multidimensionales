@@ -1,42 +1,47 @@
 def calcular_promedio(materias):
     if not materias:
         return 0
-    total = sum(materia[1] for materia in materias)
+    total = sum(materias.values())
     return total / len(materias)
 
 def buscar_alumno(alumnos, nombre):
     for alumno in alumnos:
-        if alumno[0].lower() == nombre.lower():
+        if alumno["nombre"].lower() == nombre.lower():
             return alumno
     return None
+
+def obtener_promedio_para_ordenar(alumno):
+    return calcular_promedio(alumno["materias"])
 
 def ver_alumnos(alumnos):
     if not alumnos:
         print("\nNo hay alumnos registrados.")
         return
 
-    alumnos_ordenados = sorted(alumnos, key=lambda x: calcular_promedio(x[1]), reverse=True)
+    alumnos_ordenados = sorted(alumnos, key=obtener_promedio_para_ordenar, reverse=True)
     
-    print("\nLista de Alumnos")
+    print("\n--- Lista de Alumnos ---")
     for alumno in alumnos_ordenados:
-        nombre = alumno[0]
-        materias = alumno[1]
+        nombre = alumno["nombre"]
+        materias = alumno["materias"]
         promedio = calcular_promedio(materias)
         
         print(f"\nAlumno: {nombre} | Promedio: {promedio:.2f}")
-        for materia in materias:
-            print(f"  - {materia[0]}: {materia[1]}")
+        
+        for materia, nota in materias.items():
+            print(f"  - {materia}: {nota}")
             
     if alumnos_ordenados:
         mejor = alumnos_ordenados[0]
-        print(f"\nMejor alumno: {mejor[0]} con un promedio de {calcular_promedio(mejor[1]):.2f}")
+        promedio_mejor = calcular_promedio(mejor["materias"])
+        print(f"\n🏆 Mejor alumno: {mejor['nombre']} con un promedio de {promedio_mejor:.2f}")
 
 def agregar_alumno(alumnos):
     nombre = input("\nIngrese el nombre del alumno: ")
     if buscar_alumno(alumnos, nombre):
-        print("El alumno ya está registrado. Ir la opción 3 para modificar sus notas.")
+        print("El alumno ya está registrado. Ve a la opción 3 para modificar sus notas.")
     else:
-        alumnos.append([nombre, []])
+        alumnos.append({"nombre": nombre, "materias": {}})
         print(f"Alumno {nombre} agregado con éxito.")
 
 def gestionar_notas(alumnos):
@@ -47,39 +52,32 @@ def gestionar_notas(alumnos):
         print("El alumno no existe. Agréguelo primero (Opción 2).")
         return
         
-    nombre_materia = input("Ingrese el nombre de la materia: ")
+    materia = input("Ingrese el nombre de la materia: ")
     try:
         nota = float(input("Ingrese la nota: "))
     except ValueError:
         print("La nota debe ser un número válido.")
         return
 
-    materias_del_alumno = alumno[1]
-    materia_encontrada = False
-
-    for materia in materias_del_alumno:
-        if materia[0].lower() == nombre_materia.lower():
-            print(f"Modificando nota de {materia[0]}: de {materia[1]} a {nota}")
-            materia[1] = nota
-            materia_encontrada = True
-            break
-            
-    if not materia_encontrada:
-        materias_del_alumno.append([nombre_materia, nota])
-        print(f"Materia {nombre_materia} agregada con la nota {nota}.")
+    materias_del_alumno = alumno["materias"]
+    
+    if materia in materias_del_alumno:
+        print(f"Modificando nota de {materia}: de {materias_del_alumno[materia]} a {nota}")
+    else:
+        print(f"Materia {materia} agregada con la nota {nota}.")
+        
+    materias_del_alumno[materia] = nota
 
 def main():
     alumnos = []
     
     while True:
-        print("\n" + "="*30)
-        print("1. Ver alumnos y estadísticas")
-        print("2. Agregar alumno")
-        print("3. Agregar o modificar notas")
-        print("4. Salir")
-        print("="*30)
+        print("Ver alumnos y estadísticas")
+        print("Agregar alumno")
+        print("Agregar o modificar notas")
+        print("Salir")
         
-        opcion = input("Elige una opción: ")
+        opcion = input("Elige una opción")
         
         if opcion == '1':
             ver_alumnos(alumnos)
