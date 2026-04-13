@@ -3,106 +3,86 @@ const { stdin: input, stdout: output } = require('process');
 
 const rl = readline.createInterface({ input, output });
 
+// Array de objetos. Ejemplo: [{ nombre: "Juan", materias: { "Matemáticas": 9, "Historia": 8 } }]
 let alumnos = [];
 
-function calcularPromedio(materias) {
-    if (materias.length === 0) return 0;
-    let total = materias.reduce((suma, materia) => suma + materia[1], 0);
-    return total / materias.length;
-}
+const calcularPromedio = (materias) => {
+    const notas = Object.values(materias);
+    if (notas.length === 0) return 0;
+    const total = notas.reduce((suma, nota) => suma + nota, 0);
+    return total / notas.length;
+};
 
-function buscarAlumno(nombre) {
-    for (let i = 0; i < alumnos.length; i++) {
-        if (alumnos[i][0].toLowerCase() === nombre.toLowerCase()) {
-            return alumnos[i];
-        }
-    }
-    return null;
-}
+const buscarAlumno = (nombre) => 
+    alumnos.find(a => a.nombre.toLowerCase() === nombre.toLowerCase());
 
 function verAlumnos() {
     if (alumnos.length === 0) {
-        console.log("\nNo hay alumnos registrados.");
-        return;
+        return console.log("\nNo hay alumnos registrados.");
     }
 
-    let alumnosOrdenados = [...alumnos].sort((a, b) => calcularPromedio(b[1]) - calcularPromedio(a[1]));
+    const alumnosOrdenados = [...alumnos].sort((a, b) => 
+        calcularPromedio(b.materias) - calcularPromedio(a.materias)
+    );
 
     console.log("\n--- Lista de Alumnos ---");
-    alumnosOrdenados.forEach(alumno => {
-        let nombre = alumno[0];
-        let materias = alumno[1];
-        let promedio = calcularPromedio(materias);
-
+    alumnosOrdenados.forEach(({ nombre, materias }) => {
+        const promedio = calcularPromedio(materias);
         console.log(`\nAlumno: ${nombre} | Promedio: ${promedio.toFixed(2)}`);
-        materias.forEach(materia => {
-            console.log(`  - ${materia[0]}: ${materia[1]}`);
+        
+        Object.entries(materias).forEach(([materia, nota]) => {
+            console.log(`  - ${materia}: ${nota}`);
         });
     });
 
-    if (alumnosOrdenados.length > 0) {
-        let mejor = alumnosOrdenados[0];
-        console.log(`\n🏆 Mejor alumno: ${mejor[0]} con un promedio de ${calcularPromedio(mejor[1]).toFixed(2)}`);
-    }
+    const mejor = alumnosOrdenados[0];
+    console.log(`\n🏆 Mejor alumno: ${mejor.nombre} con un promedio de ${calcularPromedio(mejor.materias).toFixed(2)}`);
 }
 
 async function agregarAlumno() {
     const nombre = await rl.question("\nIngrese el nombre del alumno: ");
+    
     if (buscarAlumno(nombre)) {
         console.log("El alumno ya está registrado. Ve a la opción 3 para modificar sus notas.");
     } else {
-        alumnos.push([nombre, []]);
+        // Guardamos un objeto en lugar de un array
+        alumnos.push({ nombre, materias: {} });
         console.log(`Alumno ${nombre} agregado con éxito.`);
     }
 }
 
 async function gestionarNotas() {
     const nombre = await rl.question("\nIngrese el nombre del alumno: ");
-    let alumno = buscarAlumno(nombre);
+    const alumno = buscarAlumno(nombre);
 
     if (!alumno) {
-        console.log("El alumno no existe. Por favor, agréguelo primero (Opción 2).");
-        return;
+        return console.log("El alumno no existe. Por favor, agréguelo primero (Opción 2).");
     }
 
-    const nombreMateria = await rl.question("Ingrese el nombre de la materia: ");
-    let notaInput = await rl.question("Ingrese la nota: ");
-    let nota = parseFloat(notaInput);
+    const materia = await rl.question("Ingrese el nombre de la materia: ");
+    const nota = parseFloat(await rl.question("Ingrese la nota: "));
 
     if (isNaN(nota)) {
-        console.log("La nota debe ser un número válido.");
-        return;
+        return console.log("La nota debe ser un número válido.");
     }
 
-    let materiasDelAlumno = alumno[1];
-    let materiaEncontrada = false;
-
-    for (let i = 0; i < materiasDelAlumno.length; i++) {
-        if (materiasDelAlumno[i][0].toLowerCase() === nombreMateria.toLowerCase()) {
-            console.log(`Modificando nota de ${materiasDelAlumno[i][0]}: de ${materiasDelAlumno[i][1]} a ${nota}`);
-            materiasDelAlumno[i][1] = nota;
-            materiaEncontrada = true;
-            break;
-        }
+    if (alumno.materias[materia] !== undefined) {
+        console.log(`Modificando nota de ${materia}: de ${alumno.materias[materia]} a ${nota}`);
+    } else {
+        console.log(`Materia ${materia} agregada con la nota ${nota}.`);
     }
-
-    if (!materiaEncontrada) {
-        materiasDelAlumno.push([nombreMateria, nota]);
-        console.log(`Materia ${nombreMateria} agregada con la nota ${nota}.`);
-    }
+    
+    alumno.materias[materia] = nota;
 }
 
 async function main() {
     let salir = false;
     while (!salir) {
-        console.log("\n==============================");
-        console.log("1. Ver alumnos y estadísticas");
-        console.log("2. Agregar alumno");
-        console.log("3. Agregar o modificar notas");
-        console.log("4. Salir");
-        console.log("==============================");
-
-        const opcion = await rl.question("Elige una opción: ");
+        console.log("Ver alumnos y estadísticas");
+        console.log("Agregar alumno");
+        console.log("Agregar o modificar notas");
+        console.log("Salir");
+        const opcion = await rl.question("Elige una opción");
 
         switch (opcion) {
             case '1':
